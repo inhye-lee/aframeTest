@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>AR.js with A-Frame</title>
+    <script src="https://aframe.io/releases/1.2.0/aframe.min.js"></script>
+    <script src="https://raw.githack.com/AR-js-org/AR.js/master/aframe/build/aframe-ar.js"></script>
+    <style>
+      body, html {
+        margin: 0;
+        padding: 0;
+        overflow: hidden;
+        font-family: Arial, sans-serif;
+        height: 100%;
+        width: 100%;
+      }
+      #location-info {
+        position: absolute;
+        top: 10px;
+        left: 10px;
+        background: rgba(255, 255, 255, 0.8);
+        padding: 10px;
+        border-radius: 5px;
+        z-index: 1;
+      }
+      #error-message {
+        position: absolute;
+        top: 50px;
+        left: 10px;
+        background: rgba(255, 0, 0, 0.8);
+        color: white;
+        padding: 10px;
+        border-radius: 5px;
+        z-index: 1;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="location-info">Detecting your location...</div>
+    <div id="error-message"></div>
+    <a-scene embedded arjs="sourceType: webcam; debugUIEnabled: false;">
+      <!-- User's Current Location -->
+      <a-entity id="user-location">
+        <a-sphere color="yellow" radius="1" material="opacity: 0.7"></a-sphere>
+        <a-text value="Your Location" color="black" position="0 1.5 0" 
+                look-at="[gps-camera]" scale="5 5 5"></a-text>
+      </a-entity>
+
+      <!-- Hawaii Convention Center -->
+      <a-entity id="hawaii-convention-center">
+        <a-sphere color="blue" radius="1" material="opacity: 0.7"></a-sphere>
+        <a-text value="Hawaii Convention Center" color="black" position="0 1.5 0" 
+                look-at="[gps-camera]" scale="5 5 5"></a-text>
+      </a-entity>
+      
+      <!-- Nearby Location A -->
+      <a-entity id="nearby-location-a">
+        <a-sphere color="red" radius="1" material="opacity: 0.7"></a-sphere>
+        <a-text value="Nearby Location A" color="black" position="0 1.5 0" 
+                look-at="[gps-camera]" scale="5 5 5"></a-text>
+      </a-entity>
+
+      <a-camera gps-camera rotation-reader></a-camera>
+    </a-scene>
+
+    <script>
+      if (navigator.geolocation) {
+        navigator.geolocation.getCurrentPosition(function(position) {
+          const latitude = position.coords.latitude;
+          const longitude = position.coords.longitude;
+          document.getElementById("location-info").innerHTML = 
+            `Your Location: Latitude: ${latitude}, Longitude: ${longitude}<br>
+            Hawaii Convention Center: Latitude: 21.289373, Longitude: -157.838379<br>
+            Nearby Location A: Latitude: 21.290373, Longitude: -157.837379`;
+
+          const userLocationEntity = document.getElementById("user-location");
+          userLocationEntity.setAttribute('gps-entity-place', `latitude: ${latitude}; longitude: ${longitude};`);
+
+          const hawaiiConventionCenterEntity = document.getElementById("hawaii-convention-center");
+          // Adjust the latitude and longitude to be within a visible range
+          // 0.0001 degrees is approximately 11 meters, so this places the POI ~11 meters from the user's location
+          hawaiiConventionCenterEntity.setAttribute('gps-entity-place', `latitude: ${latitude + 0.0001}; longitude: ${longitude + 0.0001};`);
+
+          const nearbyLocationAEntity = document.getElementById("nearby-location-a");
+          // Adjust the latitude and longitude to be within a visible range
+          // 0.0002 degrees is approximately 22 meters, so this places another POI ~22 meters from the user's location
+          nearbyLocationAEntity.setAttribute('gps-entity-place', `latitude: ${latitude + 0.0002}; longitude: ${longitude + 0.0002};`);
+        }, function(error) {
+          let errorMessage = "Error detecting your location.";
+          switch(error.code) {
+            case error.PERMISSION_DENIED:
+              errorMessage = "User denied the request for Geolocation. Please enable location permissions in your browser settings.";
+              break;
+            case error.POSITION_UNAVAILABLE:
+              errorMessage = "Location information is unavailable. Please try again.";
+              break;
+            case error.TIMEOUT:
+              errorMessage = "The request to get user location timed out. Please try again.";
+              break;
+            case error.UNKNOWN_ERROR:
+              errorMessage = "An unknown error occurred. Please try again.";
+              break;
+          }
+          document.getElementById("error-message").innerText = errorMessage;
+        });
+      } else {
+        document.getElementById("location-info").innerHTML = "Geolocation is not supported by this browser.";
+      }
+    </script>
+  </body>
+</html>
